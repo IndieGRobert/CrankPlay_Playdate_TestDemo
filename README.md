@@ -1,5 +1,5 @@
 # CrankPlay_Playdate_TestDemo
-A Playdate Game Demo, which indicates the use of the crank function.
+A simple Playdate Game Demo indicates the use of the crank function.
 
 Developed by IndieGRobert
 
