@@ -185,6 +185,7 @@ function playdate:update()
 		if playerInstance then
 	        playerInstance:update()
 	    end
+	    updateEnemies()
         playdate.timer.updateTimers()
     elseif gameState == kGameRankState then
         showScoreboard()
@@ -223,6 +224,20 @@ function resetGame()
 	    playerInstance:resetPlayerState()
 	end
 end
+
+function pauseShip(state) -- function that ship puasing
+	if gameState == kGamePlayingState then
+		if state then
+			playerInstance:stopShip()
+			print("ship is pausing")
+		else
+			playerInstance:resumeShip()
+			print("ship is moving")
+
+		end
+	end
+end
+
 
 function switchTime()
 	-- print( isDocked )
@@ -275,6 +290,10 @@ function playdate.upButtonUp()
 end
 
 function playdate.downButtonDown()
+	if gameState == kGamePlayingState then
+		if rippling then return end
+		rippling = playerInstance:createRippleAttack()
+	end
 	-- setScreenShake(10)
 end
 
@@ -313,7 +332,23 @@ end
 
 local menu = playdate.getSystemMenu()
 
+local shipState = false
+
+local noCollision = false
+
 local menuItem, error = menu:addMenuItem("ResetGame", resetGame)
+
+local menuItem, error = menu:addCheckmarkMenuItem("StopMoving",shipState,function()
+	--function闭包，用于在stopMoving参数发生变化的情况下来运行。
+	shipState = not shipState--每次数值变化都意味着这个值的改变。很有道理
+	pauseShip(shipState)
+end)
+
+-- local menuItem, error = menu:addCheckmarkMenuItem("removeCollision", noCollision, function()
+-- 	noCollision = not noCollision
+
+
+-- end)
 
 -- local checkmarkMenuItem, error = menu:addCheckmarkMenuItem("Item 2", true, function(value)
 --     print("Checkmark menu item value changed to: ", value)

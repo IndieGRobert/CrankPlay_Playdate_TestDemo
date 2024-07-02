@@ -18,7 +18,7 @@ function createScoreDisplay()
 	scoreSprite:setCenter(0,0)
 	scoreSprite:moveTo(0,220)
 	scoreSprite:add()
-	print("display")
+	-- print("display")
 
 	hpSprite:setCenter(0,0)
 	hpSprite:moveTo(300,0)
@@ -44,9 +44,10 @@ function updateDisplay()
 		gfx.drawTextAligned(scoreText,8,0,kTextAlignment.left)
 		gfx.drawText(hpText,310,0)
 		gfx.setFont(gfx.font.kVariantBold)
-		print(gfx.getFont())
+		-- print(gfx.getFont())
 	gfx.popContext()
 	scoreSprite:setImage(scoreImage)
+	scoreSprite:setZIndex(100)
 
 end
 
@@ -72,7 +73,7 @@ function finalScore()
 	scoreSprite:add()
    local scoreText = tostring(score) -- 确保分数变字符串
 	local finalScoreText = "*FinalScore:*" .. scoreText
-	print(finalScoreText)
+	-- print(finalScoreText)
 	gfx.setFont(gfx.font.kVariantBold)
 	
 	local textWidth, textHeight = gfx.getTextSize(finalScoreText)

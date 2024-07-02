@@ -32,17 +32,17 @@ function bullet:update()
 	local x,y, collisions, length = self:moveWithCollisions(self.x + math.sin(self.bulletAngle) * self.bulletSpeed, self.y - math.cos(self.bulletAngle) * self.bulletSpeed)
 
 	-- print(">>>>bulletLength",length)
-	if length > 0 then
-		for index, collision in ipairs(collisions) do
-			local collideObject = collision['other']
-			if collideObject:isa(Enemy) then
-				collideObject:remove()
-				self:remove() 
-				incrementScore()
-				setShakeAmount(1)
-			end
-		end
-	end
+	-- if length > 0 then
+	-- 	for index, collision in ipairs(collisions) do
+	-- 		local collideObject = collision['other']
+	-- 		if collideObject:isa(Enemy) then
+	-- 			-- collideObject:remove()
+	-- 			self:remove() 
+	-- 			incrementScore()
+	-- 			setShakeAmount(1)
+	-- 		end
+	-- 	end
+	-- end
 
 	if self.x <= 0 or self.x >= 400 then
 		self:remove()

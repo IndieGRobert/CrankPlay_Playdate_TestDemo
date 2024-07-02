@@ -27,16 +27,17 @@ local deceleration = 0.03
 local accelerationRate = 0.01
 local maxAcceleration = 0.5
 
-local maxParticles = 10
-
+local maxParticles = 20
 
 function player:init(x,y,width,hight) --初始化player
+
 	-- player.super.init(self)
 	self.playerIcon = gfx.imagetable.new( "Sprites/player")
 	assert(self.playerIcon,"Player icon not loaded")  -- 确保 playerIcon 已正确加载
 
 	self:setImage(self.playerIcon:getImage(1))
 	self:setCollideRect(8,8,12,12)--动态更新的物理
+	self:setZIndex(10)
 	self:moveTo(x,y) 
 	self:add()
 
@@ -83,6 +84,8 @@ function player:init(x,y,width,hight) --初始化player
 	self.crankAngle = 0
 	self.hitTimer = nil
 
+	self.pauseShip = false
+	self.noCollision = false
 	self.isAcc = false
 	self.currentSpeed = minSpeed
 	self.currentAcc = 0
@@ -92,24 +95,27 @@ function player:init(x,y,width,hight) --初始化player
 	self.particlePool = ParticlePool(maxParticles) --创建粒子池实例
 	self.particles = {}
 
+	self.ripples = {}
+
 	return self
 end
 
 function player:update()
+	-- if not self.noCollision then
 	local x,y,collisions, length = self:moveWithCollisions(self.x, self.y)
 
-	if length > 0 then
-		for index, collision in ipairs(collisions) do
-			local collideObject = collision.other
-			if collideObject:isa(Enemy) then
-				collideObject:remove()
-				setShakeAmount(6)
-				lostEnergy()
-				-- self:remove()
-				incrementScore()
-			end
-		end
-	end
+	-- 	if length > 0 then
+	-- 		for index, collision in ipairs(collisions) do
+	-- 			local collideObject = collision.other
+	-- 			if collideObject:isa(Enemy) then
+	-- 				-- collideObject:remove()
+	-- 				-- setShakeAmount(6)
+	-- 				-- lostEnergy()
+	-- 				-- incrementScore()
+	-- 			end
+	-- 		end
+	-- 	end
+	-- end
 
 	self.crankAngle = math.rad(pd.getCrankPosition())
 	self:updateImage()
@@ -165,7 +171,6 @@ end
 -- 	self.trailSprites[1]:setVisible(true)
 -- 	self.trailSprites[1]:setImage(self:createTrailImage(self.trailOpacityStep))
 
-
 -- end
 
 -- function player:createTrailImage(opacity)
@@ -216,7 +221,6 @@ function player:getBoostPosition()
 	return boostX, boostY
 end
 
-
 --------------------particles related---------------------
 
 function player:startParticleSpawn()
@@ -245,9 +249,9 @@ function player:createParticle()
 	local x,y = self:getBoostPosition()
 	local angle = self.crankAngle + math.pi -- 粒子在角色后面释放
 	local speed = 0.5
-	local lifetime = 40
+	local lifetime = 20
 	local particle = self.particlePool:getParticle()
-	print( "CalcuParticles",self.particlePool )
+	-- print( "CalcuParticles",self.particlePool )
 	if particle then
 		self.particlePool:resetParticle(particle,x,y,angle,speed,lifetime)
 		table.insert(self.particles, particle)
@@ -274,7 +278,7 @@ function player:onParticleNumber()
 		end
 	end
 	self.particleNum = count
-	print(">>>>>>particleNum", #self.particles )
+	-- print(">>>>>>particleNum", #self.particles )
 	return self.particleNum
 end
 
@@ -289,6 +293,13 @@ function player:removeAllParticles()
 	end
 end
 
+function player:createRippleAttack()
+	local rx,ry = self:getPosition()
+	local lifetime = 200
+
+	table.insert(self.ripples, rippleAttack(rx, ry, lifetime))
+end
+
 -- function player:removeAllParticles()
 --     for i = #self.particles, 1, -1 do
 --         local particle = self.particles[i]
@@ -297,30 +308,48 @@ end
 --     end
 -- end
 
+function player:stopShip()
+	self.pauseShip = true
+	self.noCollision = true
+	self:setCollideRect(8,8,0,0)--将物理大小归零
+
+end
+
+function player:resumeShip()
+	self.pauseShip = false
+	self.noCollision = false
+	self:setCollideRect(8,8,12,12)--恢复物理大小
+end
+
+
 function player:updatePlayerPosition()
 
 	local pw,ph = self:getSize()
 
-	self.x += math.sin(self.crankAngle) * self.currentSpeed
-	self.y -= math.cos(self.crankAngle) * self.currentSpeed 
+	if not self.pauseShip then
 
-	if self.x < 2 - pw/2 then
-		self.x = 398 + pw/2
-	elseif self.x > 398 + pw/2 then
-		self.x = 2 - pw/2
-	end
+		self.x += math.sin(self.crankAngle) * self.currentSpeed
+		self.y -= math.cos(self.crankAngle) * self.currentSpeed 
 
-	if self.y < 1 - ph/2 then
-		self.y = 238 - 20 + ph/2 -- cut the UI part
-	elseif self.y > 238 - 20 + ph/2 then
-		self.y = 1 - ph/2
+		if self.x < 2 - pw/2 then
+			self.x = 398 + pw/2
+		elseif self.x > 398 + pw/2 then
+			self.x = 2 - pw/2
+		end
+
+		if self.y < 1 - ph/2 then
+			self.y = 238 - 20 + ph/2 -- cut the UI part
+		elseif self.y > 238 - 20 + ph/2 then
+			self.y = 1 - ph/2
+		end
 	end
 
 	self:moveTo(self.x, self.y)
 	self:setCollideRect(8,8,pw/2,ph/2)--动态更新的物理
+	-- print("collideSize",self:getCollideRect())
 	self:setRotation(pd.getCrankPosition())
 
-	-- --喷射器的sprite位置更新
+	--喷射器的sprite位置更新
 	self.boostSprite:moveTo(self.x, self.y)
 	self.boostSprite:setRotation(pd.getCrankPosition())
 end
